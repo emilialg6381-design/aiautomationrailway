@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Studio | bauti1823xd</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060608;
+            --surface: rgba(255,255,255,0.04);
+            --surface2: rgba(255,255,255,0.07);
+            --border: rgba(255,255,255,0.08);
+            --border2: rgba(255,255,255,0.14);
+            --accent: #7c6fff;
+            --accent2: #3de8c8;
+            --text: #f0eeff;
+            --muted: rgba(240,238,255,0.4);
+            --error: #ff6b8a;
+            --success: #00d4aa;
+            --card-h: 220px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .blob {
+            position: fixed; border-radius: 50%;
+            filter: blur(120px); pointer-events: none; z-index: 0;
+            animation: drift 18s ease-in-out infinite alternate;
+        }
+        .blob1 { width: 600px; height: 600px; background: rgba(124,111,255,0.12); top: -200px; left: -100px; }
+        .blob2 { width: 500px; height: 500px; background: rgba(61,232,200,0.07); bottom: -150px; right: -100px; animation-delay: -9s; }
+        @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(40px, 30px) scale(1.08); } }
+
+        .page { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; padding: 40px 20px 60px; gap: 0; }
+
+        .header { text-align: center; margin-bottom: 40px; animation: fadeUp 0.8s ease both; }
+        .header-eyebrow {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.7rem; font-weight: 700;
+            letter-spacing: 0.25em; text-transform: uppercase;
+            color: var(--accent2); margin-bottom: 10px;
+        }
+        .header h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            font-weight: 800; line-height: 1.05;
+            background: linear-gradient(135deg, #fff 30%, var(--accent) 70%, var(--accent2) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header p { color: var(--muted); font-size: 0.9rem; margin-top: 8px; font-weight: 300; }
+        .corner-mark {
+            position: fixed; font-size: 0.6rem; color: rgba(255,255,255,0.1);
+            font-family: 'Syne', sans-serif; font-weight: 700;
+            letter-spacing: 0.15em; text-transform: uppercase;
+        }
+        .top-left { top:18px; left:18px; } .top-right { top:18px; right:18px; }
+
+        .generator {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 28px;
+            padding: 28px;
+            width: 100%; max-width: 540px;
+            backdrop-filter: blur(20px);
+            animation: fadeUp 0.8s 0.1s ease both;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 40px 80px rgba(0,0,0,0.6);
+        }
+
+        .mode-selector {
+            display: flex; gap: 8px; margin-bottom: 22px;
+            background: rgba(0,0,0,0.3); border-radius: 14px; padding: 5px;
+            border: 1px solid var(--border);
+        }
+        .mode-btn {
+            flex: 1; padding: 9px 12px; border-radius: 10px;
+            border: none; background: transparent;
+            color: var(--muted); cursor: pointer; font-size: 0.88rem;
+            font-family: 'DM Sans', sans-serif; font-weight: 500;
+            transition: all 0.25s ease;
+        }
+        .mode-btn.active {
+            background: linear-gradient(135deg, var(--accent), #9f94ff);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(124,111,255,0.4);
+        }
+        .mode-btn:not(.active):hover { color: var(--text); background: var(--surface2); }
+
+        #videoSettings { overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease; max-height: 60px; opacity: 1; }
+        #videoSettings.hidden { max-height: 0; opacity: 0; }
+        .settings-row { display: flex; gap: 10px; margin-bottom: 18px; justify-content: center; }
+        .setting-item { flex: 0 0 auto; max-width: 200px; }
+        .setting-item label {
+            display: block; font-size: 0.68rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            color: var(--muted); margin-bottom: 6px; text-align: center;
+        }
+        select {
+            width: 100%; background: rgba(0,0,0,0.4); color: var(--text);
+            border: 1px solid var(--border2); padding: 9px 12px;
+            border-radius: 10px; font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem; outline: none; cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        select:focus { border-color: var(--accent); }
+
+        .input-group { display: flex; gap: 10px; }
+        input[type="text"] {
+            flex: 1; padding: 13px 16px; border-radius: 12px;
+            border: 1px solid var(--border2);
+            background: rgba(0,0,0,0.4); color: var(--text);
+            font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+            outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input[type="text"]:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(124,111,255,0.15);
+        }
+        input[type="text"]::placeholder { color: rgba(240,238,255,0.25); }
+
+        .gen-btn {
+            padding: 13px 22px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, var(--accent) 0%, #9f94ff 100%);
+            color: #fff; font-family: 'Syne', sans-serif;
+            font-weight: 700; font-size: 0.9rem; cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 4px 24px rgba(124,111,255,0.45);
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+            position: relative; overflow: hidden;
+        }
+        .gen-btn::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .gen-btn:hover:not(:disabled)::after { opacity: 1; }
+        .gen-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(124,111,255,0.55); }
+        .gen-btn:active:not(:disabled) { transform: translateY(0); }
+        .gen-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+        #st {
+            font-size: 0.8rem; margin-top: 14px; min-height: 1.3em;
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+            color: var(--muted);
+        }
+        #st.error { color: var(--error); }
+        #st.success { color: var(--success); }
+        .spinner {
+            width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0;
+            border: 2px solid rgba(124,111,255,0.3); border-top-color: var(--accent);
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .progress-container {
+            width: 100%; height: 3px; background: rgba(255,255,255,0.1);
+            border-radius: 2px; margin-top: 8px; overflow: hidden;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .progress-container.visible { opacity: 1; }
+        .progress-bar {
+            height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border-radius: 2px; width: 0%; transition: width 0.3s ease;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+        .gallery-wrap { width: 100%; max-width: 1200px; margin-top: 48px; animation: fadeUp 0.8s 0.2s ease both; }
+
+        .tab-bar {
+            display: flex; gap: 4px; padding: 0 4px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+        .tab-btn {
+            padding: 10px 20px; background: transparent; color: var(--muted);
+            border: none; cursor: pointer;
+            font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 600;
+            border-bottom: 2px solid transparent; margin-bottom: -1px;
+            transition: color 0.2s, border-color 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
+        .tab-btn:hover:not(.active) { color: rgba(240,238,255,0.7); }
+        .tab-count {
+            background: rgba(124,111,255,0.2); color: var(--accent);
+            font-size: 0.68rem; font-weight: 700; padding: 2px 7px;
+            border-radius: 99px; font-family: 'DM Sans', sans-serif;
+            transition: background 0.2s;
+        }
+        .tab-btn.active .tab-count { background: rgba(124,111,255,0.35); }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px; overflow: hidden;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            animation: fadeUp 0.5s ease both;
+            position: relative;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(124,111,255,0.2);
+            border-color: rgba(124,111,255,0.25);
+        }
+        .card img { width: 100%; height: var(--card-h); display: block; object-fit: cover; }
+        .card video { width: 100%; height: var(--card-h); display: block; object-fit: cover; background: #000; }
+        .card video.portrait { height: 380px; }
+
+        /* Delete Button Styles */
+        .delete-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 107, 138, 0.2);
+            color: var(--error);
+            border: 1px solid rgba(255, 107, 138, 0.3);
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 10;
+            font-size: 0.8rem;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s ease;
+        }
+        .delete-btn:hover {
+            background: var(--error);
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        .card-footer {
+            padding: 10px 14px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-top: 1px solid var(--border);
+        }
+        .card-type {
+            font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--muted);
+            font-family: 'Syne', sans-serif;
+        }
+        .dl-btn {
+            font-size: 0.75rem; background: transparent;
+            color: var(--accent2); border: 1px solid rgba(61,232,200,0.3);
+            padding: 5px 12px; border-radius: 8px; cursor: pointer;
+            text-decoration: none; font-family: 'DM Sans', sans-serif;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .dl-btn:hover { background: rgba(61,232,200,0.1); border-color: var(--accent2); }
+
+        .empty {
+            text-align: center; padding: 80px 20px;
+            color: rgba(255,255,255,0.15); font-size: 0.9rem;
+            grid-column: 1/-1;
+        }
+        .empty-icon { font-size: 2.5rem; margin-bottom: 12px; display: block; opacity: 0.4; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .page { padding: 20px 15px 40px; }
+            .generator { padding: 20px; }
+            .input-group { flex-direction: column; }
+            .gen-btn { width: 100%; }
+            .settings-row { flex-direction: column; gap: 15px; }
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+    <div class="corner-mark top-left">bauti1823xd</div>
+    <div class="corner-mark top-right">bauti1823xd</div>
+
+    <div class="page">
+        <div class="header">
+            <div class="header-eyebrow">✦ Powered by Grok AI</div>
+            <h1>AI Studio</h1>
+            <p>Generate images & videos from a single prompt</p>
+        </div>
+
+        <div class="generator">
+            <div class="mode-selector">
+                <button class="mode-btn active" id="vBtn" onclick="setMode('video')">🎥 Video</button>
+                <button class="mode-btn" id="iBtn" onclick="setMode('image')">🖼️ Image</button>
+            </div>
+
+            <div id="videoSettings">
+                <div class="settings-row">
+                    <div class="setting-item">
+                        <label>Aspect Ratio</label>
+                        <select id="asp">
+                            <option value="VIDEO_ASPECT_RATIO_LANDSCAPE">Landscape 16:9</option>
+                            <option value="VIDEO_ASPECT_RATIO_PORTRAIT">Portrait 9:16</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="p" placeholder="Describe your idea in detail…" onkeydown="if(event.key==='Enter') gen()">
+                <button class="gen-btn" id="genBtn" onclick="gen()">Generate</button>
+            </div>
+            <div id="st"></div>
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+
+        <div class="gallery-wrap">
+            <div class="tab-bar">
+                <button class="tab-btn active" onclick="switchTab('all')">All <span class="tab-count" id="cnt-all">0</span></button>
+                <button class="tab-btn" onclick="switchTab('video')">🎥 Videos <span class="tab-count" id="cnt-video">0</span></button>
+                <button class="tab-btn" onclick="switchTab('image')">🖼️ Images <span class="tab-count" id="cnt-image">0</span></button>
+            </div>
+            <div class="tab-panel active" id="tab-all"><div class="grid" id="grid-all"></div></div>
+            <div class="tab-panel" id="tab-video"><div class="grid" id="grid-video"></div></div>
+            <div class="tab-panel" id="tab-image"><div class="grid" id="grid-image"></div></div>
+        </div>
+    </div>
+
+    <script>
+        let mode = 'video', lastLen = -1, currentJobId = null;
+
+        function setMode(m) {
+            mode = m;
+            document.getElementById('vBtn').classList.toggle('active', m==='video');
+            document.getElementById('iBtn').classList.toggle('active', m==='image');
+            document.getElementById('videoSettings').classList.toggle('hidden', m==='image');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach((b,i) =>
+                b.classList.toggle('active', ['all','video','image'][i] === tab));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+        }
+
+        function makeCard(item) {
+            const media = item.type === 'video'
+                ? `<video src="${item.url}" controls preload="metadata" onloadedmetadata="if(this.videoHeight>this.videoWidth)this.classList.add('portrait')"></video>`
+                : `<img src="${item.url}" loading="lazy" alt="generated">`;
+            const label = item.type === 'video' ? '🎥 Video' : '🖼️ Image';
+            const timestamp = new Date(item.t * 1000).toLocaleString();
+            
+            return `<div class="card">
+                <button class="delete-btn" onclick="deleteFile('${item.type}', '${item.filename}')">🗑️</button>
+                ${media}
+                <div class="card-footer">
+                    <div>
+                        <span class="card-type">${label}</span>
+                        <div style="font-size:0.6rem;color:var(--muted);margin-top:2px;">${timestamp}</div>
+                    </div>
+                    <a class="dl-btn" href="${item.url}" download>↓ Download</a>
+                </div>
+            </div>`;
+        }
+
+        async function deleteFile(type, filename) {
+            if(!confirm("Are you sure you want to delete this?")) return;
+            
+            try {
+                const res = await fetch('/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type, filename })
+                });
+                if (res.ok) {
+                    lastLen = -1; 
+                    refresh();
+                }
+            } catch(e) {
+                console.error("Delete failed:", e);
+            }
+        }
+
+        function setStatus(text, type = 'normal', spinning = false) {
+            const el = document.getElementById('st');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            
+            el.className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            el.innerHTML = spinning ? `<span class="spinner"></span>${text}` : text;
+            
+            if (spinning) {
+                progressContainer.classList.add('visible');
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 10;
+                    if (progress > 90) progress = 90;
+                    progressBar.style.width = progress + '%';
+                }, 1000);
+                
+                progressContainer._interval = interval;
+            } else {
+                progressContainer.classList.remove('visible');
+                if (progressContainer._interval) {
+                    clearInterval(progressContainer._interval);
+                }
+                progressBar.style.width = '0%';
+            }
+        }
+
+        function updateProgress(progressText) {
+            const progressBar = document.getElementById('progressBar');
+            
+            let progressPercent = 10;
+            if (progressText.includes('Setting up')) progressPercent = 20;
+            else if (progressText.includes('Starting')) progressPercent = 30;
+            else if (progressText.includes('Generating')) progressPercent = 60;
+            else if (progressText.includes('Downloading')) progressPercent = 90;
+            else if (progressText.includes('Complete')) progressPercent = 100;
+            
+            progressBar.style.width = progressPercent + '%';
+        }
+
+        async function gen() {
+            const prompt = document.getElementById('p').value.trim();
+            if (!prompt) { 
+                setStatus('⚠️ Enter a prompt first.', 'error', false); 
+                return; 
+            }
+            
+            document.getElementById('genBtn').disabled = true;
+            setStatus('Sending request…', 'normal', true);
+            
+            try {
+                const res = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        prompt, 
+                        mode, 
+                        aspect: document.getElementById('asp').value 
+                    })
+                });
+                
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                
+                const data = await res.json();
+                currentJobId = data.job_id;
+                setStatus('Starting generation…', 'normal', true);
+                
+            } catch(e) {
+                setStatus('❌ Could not reach server.', 'error', false);
+                document.getElementById('genBtn').disabled = false;
+                currentJobId = null;
+            }
+        }
+
+        async function refresh() {
+            try {
+                const data = await (await fetch('/status')).json();
+                
+                if (data.history.length !== lastLen) {
+                    lastLen = data.history.length;
+                    const all    = data.history;
+                    const videos = all.filter(i => i.type === 'video');
+                    const images = all.filter(i => i.type === 'image');
+                    const empty  = (msg, icon) => `<div class="empty"><span class="empty-icon">${icon}</span>${msg}</div>`;
+                    
+                    document.getElementById('grid-all').innerHTML   = all.length    ? all.map(makeCard).join('')    : empty('Nothing generated yet', '✦');
+                    document.getElementById('grid-video').innerHTML = videos.length ? videos.map(makeCard).join('') : empty('No videos yet', '🎥');
+                    document.getElementById('grid-image').innerHTML = images.length ? images.map(makeCard).join('') : empty('No images yet', '🖼️');
+                    document.getElementById('cnt-all').textContent   = all.length;
+                    document.getElementById('cnt-video').textContent = videos.length;
+                    document.getElementById('cnt-image').textContent = images.length;
+                }
+                
+                const jobs = Object.values(data.active_jobs);
+                const busy = jobs.some(j => j.state === 'processing');
+                const errs = jobs.filter(j => j.state === 'error');
+                const processing = jobs.find(j => j.state === 'processing');
+                const completed = jobs.filter(j => j.state === 'done');
+                
+                document.getElementById('genBtn').disabled = busy;
+                
+                if (busy && processing) {
+                    const progressText = processing.progress || 'Processing...';
+                    setStatus(progressText, 'normal', true);
+                    updateProgress(progressText);
+                } else if (completed.length && currentJobId) {
+                    const completedJob = completed.find(j => jobs.indexOf(j) === jobs.length - 1);
+                    if (completedJob) {
+                        setStatus('✅ Generation complete!', 'success', false);
+                        currentJobId = null;
+                        setTimeout(refresh, 1000);
+                    }
+                } else if (errs.length) {
+                    setStatus('❌ ' + (errs[0].error || 'Something went wrong'), 'error', false);
+                    currentJobId = null;
+                } else if (!busy && currentJobId === null) {
+                    setStatus('', 'normal', false);
+                }
+                
+            } catch(e) {
+                console.error('Status refresh failed:', e);
+            }
+        }
+
+        setInterval(refresh, 2000);
+        window.onload = refresh;
+
+        document.getElementById('p').addEventListener('input', function() {
+            if (!document.getElementById('genBtn').disabled) {
+                setStatus('', 'normal', false);
+            }
+        });
+
+        document.getElementById('p').focus();
+    </script>
+</body>
+</html>
