@@ -5,7 +5,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Ensure Playwright browsers are installed (though base image includes them)
+# Install Chromium (even though base image includes it, this ensures it's available)
 RUN playwright install chromium
 
 COPY . .
