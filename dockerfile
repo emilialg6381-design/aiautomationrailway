@@ -2,10 +2,12 @@ FROM mcr.microsoft.com/playwright:python-1.48.0
 
 WORKDIR /app
 
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Chromium (even though base image includes it, this ensures it's available)
+# Install browsers into the same path (if needed)
 RUN playwright install chromium
 
 COPY . .
